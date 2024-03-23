@@ -13,18 +13,21 @@ const db = new sqlite3.Database('petshop.db', sqlite3.OPEN_READWRITE | sqlite3.O
 
 // Criar tabelas de produtos
 db.serialize(() => {
+  db.run('DROP TABLE IF EXISTS products');
+  db.run('DROP TABLE IF EXISTS product_details');
+
   db.run(`CREATE TABLE IF NOT EXISTS products (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        img TEXT,
-        description TEXT
+        name TEXT NOT NULL,
+        img TEXT NOT NULL,
+        description TEXT NOT NULL
       )`);
 
   db.run(
     `CREATE TABLE IF NOT EXISTS product_details (
-        product_id INTEGER,
-        price REAL,
-        size TEXT,
+        product_id INTEGER NOT NULL,
+        price REAL NOT NULL,
+        size TEXT NOT NULL,
         FOREIGN KEY(product_id) REFERENCES products(id)
         ON DELETE CASCADE
       );`

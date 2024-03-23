@@ -3,6 +3,7 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 
 const bodyParser = require('body-parser');
+const { validateProductId, validateProduct } = require('./validators');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -50,7 +51,14 @@ app.get('/products', (req, res) => {
 });
 
 app.get('/products/:id', (req, res) => {
-  const productId = req.params.id;
+  const { error, value } = validateProductId(req.params.id);
+
+  if (error) {
+    return res.status(400).json({ errors: error.details });
+  }
+
+  const productId = value;
+
   const sql = `SELECT 
       p.id, 
       p.name, 
@@ -80,15 +88,15 @@ app.get('/products/:id', (req, res) => {
   });
 });
 
-// criar resto das rotas , por enquanto só tem rota /products de listar os produtos
-
 // Rota para adicionar um novo produto
 app.post('/products', (req, res) => {
-  const { name, img, description, prices, sizes } = req.body;
+  const { error, value } = validateProduct(req.body);
 
-  if (!name || !img || !description || prices?.length != 3 || sizes?.length != 3) {
-    return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
+  if (error) {
+    return res.status(400).json({ errors: error.details });
   }
+
+  const { name, img, description, prices, sizes } = value;
 
   db.serialize(() => {
     db.run('BEGIN TRANSACTION');
@@ -130,12 +138,17 @@ app.post('/products', (req, res) => {
 
 // Rota para atualizar um produto existente
 app.put('/products/:id', (req, res) => {
-  const productId = req.params.id;
-  const { name, img, description, prices, sizes } = req.body;
+  const idValidationResult = validateProductId(req.params.id);
+  const productValidationResult = validateProduct(req.body);
 
-  if (!name || !img || !description || prices?.length != 3 || sizes?.length != 3) {
-    return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
+  if (idValidationResult.error || productValidationResult.error) {
+    const idValidationErrors = idValidationResult.error?.details ?? [];
+    const productValidationErrors = productValidationResult.error?.details ?? [];
+    return res.status(400).json({ errors: [...idValidationErrors, ...productValidationErrors] });
   }
+
+  const productId = idValidationResult.value;
+  const { name, img, description, prices, sizes } = productValidationResult.value;
 
   db.serialize(() => {
     db.run('BEGIN TRANSACTION');
@@ -193,7 +206,13 @@ app.put('/products/:id', (req, res) => {
 
 // Rota para excluir um produto pelo ID
 app.delete('/products/:id', (req, res) => {
-  const productId = req.params.id;
+  const { error, value } = validateProductId(req.params.id);
+
+  if (error) {
+    return res.status(400).json({ errors: error.details });
+  }
+
+  const productId = value;
 
   const sql = 'DELETE FROM products WHERE id = ?';
 
