@@ -1,10 +1,8 @@
-const produtosJson = require('./produtos.js');
-
 // pra rodar o servidor é só digitar node routes.js no prompt
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 
-const bodyParser = require('body-parser'); 
+const bodyParser = require('body-parser');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,172 +11,205 @@ const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
 // Conectar ao banco de dados SQLite
-const db = new sqlite3.Database('C:\\Users\\ertei\\AppData\\Roaming\\DBeaverData\\workspace6\\.metadata\\sample-database-sqlite-1\\Chinook.db'
-,sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
-
-    if (err) {
-        console.error('Erro ao abrir o banco de dados', err.message);
-    } else {
-        console.log('Conexão com o banco de dados SQLite estabelecida com sucesso');
-    }
+const db = new sqlite3.Database('petshop.db', sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+  if (err) {
+    console.error('Erro ao abrir o banco de dados', err.message);
+  } else {
+    console.log('Conexão com o banco de dados SQLite estabelecida com sucesso');
+  }
 });
 
-// Criar tabelas de produtos
-db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS products (
-        id INTEGER PRIMARY KEY,
-        name TEXT,
-        img TEXT,
-        description TEXT
-      )`
-      )
-
-      db.run(
-      `CREATE TABLE IF NOT EXISTS product_details (
-        product_id INTEGER,
-        price REAL,
-        sizes TEXT,
-        FOREIGN KEY (product_id) REFERENCES products(id)
-      );`
-      ) 
-
-    //   const stmt = db.prepare('INSERT INTO products (id, name, img, price1, price2, price3, size1, size2, size3, description) VALUES (?,?,?,?,?,?,?,?,?,?)')
-      
-    
-    // usar se necessário
-//    produtosJson.forEach(product => stmt.run(
-//         product.id,
-//         product.name, 
-//         product.img,
-//         product.price1, 
-//         product.price2, 
-//         product.price3,
-//         product.size1,
-//         product.size2,   
-//         product.size3,
-//         product.description))
-//     stmt.finalize();
-
-
-    // Função para inserir um produto na tabela 'products'
-function insertProduct(id, name, img, description) {
-    const sql = `INSERT INTO products (id, name, img, description) VALUES (?, ?, ?, ?)`;
-    db.run(sql, [id, name, img, description], function(err) {
-      if (err) {
-        console.error(err.message);
-        return;
-      }
-  
-      console.log(`Produto '${name}' inserido com sucesso!`);
-    });
-  }
-
-  // Função para inserir detalhes do produto na tabela 'product_details'
-function insertProductDetails(productId, price, sizes) {
-    const sql = `INSERT INTO product_details (product_id, price, sizes) VALUES (?, ?, ?)`;
-    db.run(sql, [productId, price, sizes], function(err) {
-      if (err) {
-        console.error(err.message);
-        return;
-      }
-  
-      console.log(`Detalhe do produto (ID: ${productId}) inserido com sucesso!`);
-    });
-  }
-
-
-  for (const produto of produtosJson) {
-    insertProduct(produto.id, produto.name, produto.img, produto.description);
-  
-    for (let i = 0; i < produto.price.length; i++) {
-      insertProductDetails(produto.id, produto.price[i], produto.sizes[i]);
-    }
-  }
-
-
-});
+db.get('PRAGMA foreign_keys = ON');
 
 // Rota para listar todos os produtos
 app.get('/products', (req, res) => {
-    db.all('SELECT p.id, p.name, p.img, p.description, pd.price, pd.sizes FROM products p JOIN product_details pd ON p.id = pd.product_id', (err, rows) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        res.json(rows);
+  const sql = `SELECT
+      p.id,
+      p.name,
+      p.img,
+      p.description,
+      json_group_array(pd.price) prices,
+      json_group_array(pd.size) sizes
+    FROM products p
+    LEFT JOIN product_details pd ON p.id = pd.product_id
+    GROUP BY p.id`;
+
+  db.all(sql, (err, rows) => {
+    if (err) {
+      // Add logging
+      return res.status(500).json({ error: 'Erro inesperado' });
+    }
+
+    rows.forEach((r) => {
+      r.prices = JSON.parse(r.prices);
+      r.sizes = JSON.parse(r.sizes);
     });
+
+    return res.json(rows);
+  });
+});
+
+app.get('/products/:id', (req, res) => {
+  const productId = req.params.id;
+  const sql = `SELECT 
+      p.id, 
+      p.name, 
+      p.img, 
+      p.description,
+      json_group_array(pd.price) prices,
+      json_group_array(pd.size) sizes
+    FROM products p
+    LEFT JOIN product_details pd ON p.id = pd.product_id
+    WHERE p.id = ?
+    GROUP BY p.id`;
+
+  db.get(sql, [productId], (err, row) => {
+    if (err) {
+      // Add logging
+      return res.status(500).json({ error: 'Erro inesperado' });
+    }
+
+    if (!row) {
+      return res.status(404).json({ error: 'Produto não encontrado' });
+    }
+
+    row.prices = JSON.parse(row.prices);
+    row.sizes = JSON.parse(row.sizes);
+
+    return res.json(row);
+  });
 });
 
 // criar resto das rotas , por enquanto só tem rota /products de listar os produtos
 
 // Rota para adicionar um novo produto
-app.post('/newproducts', (req, res) => {
-    // const { id, name, img, price1, price2, price3, sizes1, sizes2, sizes3, description } = req.body;
-    const { id, name, img, description, price1, price2, price3, sizes1, sizes2, sizes3} = req.body;
+app.post('/products', (req, res) => {
+  const { name, img, description, prices, sizes } = req.body;
 
-    // if (!id || !name || !img || !price1 || !price2 || !price3 || !sizes1 || !sizes2 || !sizes3 || !description) {
-        if (!id || !name || !img || !description|| !price1 || !price2 || !price3 || !sizes1 || !sizes2 || !sizes3) {
-        return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
-    }
+  if (!name || !img || !description || prices?.length != 3 || sizes?.length != 3) {
+    return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
+  }
 
-    db.run(sql, [id, name, img, price1, price2, price3, sizes1, sizes2, sizes3, description], function(err) {
-        if (err) {
-            return res.status(500).json({ error: err.message });
+  db.serialize(() => {
+    db.run('BEGIN TRANSACTION');
+
+    const sql = `INSERT INTO products (name, img, description) VALUES (?, ?, ?)`;
+
+    db.run(sql, [name, img, description], function (err) {
+      if (err) {
+        db.run('ROLLBACK');
+        // Add logging
+        return res.status(500).json({ error: 'Erro inesperado' });
+      }
+
+      const statement = db.prepare(`INSERT INTO product_details (product_id, price, size) VALUES (?, ?, ?)`);
+      const productId = this.lastID;
+      const errors = [];
+
+      for (let i = 0; i < 3; i++) {
+        statement.run([productId, prices[i], sizes[i]], (err) => {
+          if (err) {
+            errors.push(err);
+          }
+        });
+      }
+
+      statement.finalize(() => {
+        if (errors.length > 0) {
+          db.run('ROLLBACK');
+          // Add logging
+          return res.status(500).json({ error: 'Erro inesperado' });
         }
-        res.status(201).json({ message: 'Produto adicionado com sucesso', productId: this.lastID });
+
+        db.run('COMMIT');
+        return res.status(201).json({ id: productId, name, img, description, prices, sizes });
+      });
     });
+  });
 });
 
 // Rota para atualizar um produto existente
 app.put('/products/:id', (req, res) => {
-    const productId = req.params.id; // Captura o ID do produto a ser atualizado
-    const { name, img, price1, price2, price3, sizes1, sizes2, sizes3, description } = req.body;
+  const productId = req.params.id;
+  const { name, img, description, prices, sizes } = req.body;
 
-    if (!name || !img || !price1 || !price2 || !price3 || !sizes1 || !sizes2 || !sizes3 || !description) {
-        return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
-    }
+  if (!name || !img || !description || prices?.length != 3 || sizes?.length != 3) {
+    return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
+  }
 
-    const sql = `UPDATE products 
-                 SET name = ?, img = ?, price1 = ?, price2 = ?, price3 = ?, sizes1 = ?, sizes2 = ?, sizes3 = ?, description = ?
-                 WHERE id = ?`;
+  db.serialize(() => {
+    db.run('BEGIN TRANSACTION');
 
-    db.run(sql, [name, img, price1, price2, price3, sizes1, sizes2, sizes3, description, productId], function(err) {
+    const updateSql = `UPDATE products
+      SET name = ?, img = ?, description = ?
+      WHERE id = ?`;
+
+    db.run(updateSql, [name, img, description, productId], function (err) {
+      if (err) {
+        db.run('ROLLBACK');
+        // Add logging
+        return res.status(500).json({ error: 'Erro inesperado' });
+      }
+
+      if (this.changes === 0) {
+        db.run('ROLLBACK');
+        return res.status(404).json({ error: 'Produto não encontrado' });
+      }
+
+      const deleteSql = 'DELETE FROM product_details WHERE product_id = ?';
+
+      db.run(deleteSql, [productId], function (err) {
         if (err) {
-            return res.status(500).json({ error: err.message });
+          db.run('ROLLBACK');
+          // Add logging
+          return res.status(500).json({ error: 'Erro inesperado' });
         }
-        res.status(200).json({ message: 'Produto atualizado com sucesso', productId });
+
+        const statement = db.prepare(`INSERT INTO product_details (product_id, price, size) VALUES (?, ?, ?)`);
+        const errors = [];
+
+        for (let i = 0; i < 3; i++) {
+          statement.run([productId, prices[i], sizes[i]], (err) => {
+            if (err) {
+              errors.push(err);
+            }
+          });
+        }
+
+        statement.finalize(() => {
+          if (errors.length > 0) {
+            db.run('ROLLBACK');
+            // Add logging
+            return res.status(500).json({ error: 'Erro inesperado' });
+          }
+
+          db.run('COMMIT');
+          return res.status(204).send();
+        });
+      });
     });
+  });
 });
 
-
-// falta implementar um delete aqui 
 // Rota para excluir um produto pelo ID
 app.delete('/products/:id', (req, res) => {
-    const productId = req.params.id;
+  const productId = req.params.id;
 
-    // Verifique se o ID do produto é um número válido
-    // if (isNaN(productId)) {
-    //     return res.status(400).json({ error: 'ID do produto inválido' });
-    // }
+  const sql = 'DELETE FROM products WHERE id = ?';
 
-    // Execute a exclusão do produto no banco de dados
-    const sql = `DELETE FROM products WHERE id = ?`;
+  db.run(sql, [productId], function (err) {
+    if (err) {
+      // Add logging
+      return res.status(500).json({ error: 'Erro inesperado' });
+    }
 
-    db.run(sql, [productId], function(err) {
-        if (err) {
-            return res.status(500).json({ error: err.message });
-        }
-        
-        // Verifique se algum produto foi excluído
-        if (this.changes === 0) {
-            return res.status(404).json({ error: 'Produto não encontrado' });
-        }
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Produto não encontrado' });
+    }
 
-        res.status(200).json({ message: 'Produto excluído com sucesso' });
-    });
+    return res.status(204).send();
+  });
 });
-
-
 
 // falta integrar o frontend com o backend
 
@@ -186,9 +217,7 @@ app.delete('/products/:id', (req, res) => {
 
 // criar no front botão de excluir produto no banco
 
-
-
 // Iniciar o servidor
 app.listen(PORT, () => {
-    console.log(`Servidor iniciado na porta ${PORT}`);
+  console.log(`Servidor iniciado na porta ${PORT}`);
 });
