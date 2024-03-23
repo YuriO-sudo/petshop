@@ -1,6 +1,7 @@
 // pra rodar o servidor é só digitar node routes.js no prompt
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
+const winston = require('winston');
 
 const bodyParser = require('body-parser');
 const { validateProductId, validateProduct } = require('./validators');
@@ -11,12 +12,22 @@ const PORT = process.env.PORT || 3000;
 // Use o body-parser para analisar solicitações JSON
 app.use(bodyParser.json());
 
+const logger = winston.createLogger({
+  level: process.env.LOG_LEVEL || 'info',
+  format: winston.format.combine(
+    winston.format.errors({ stack: true }),
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [new winston.transports.Console()],
+});
+
 // Conectar ao banco de dados SQLite
 const db = new sqlite3.Database('petshop.db', sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
   if (err) {
-    console.error('Erro ao abrir o banco de dados', err.message);
+    logger.error('Erro ao abrir o banco de dados', err);
   } else {
-    console.log('Conexão com o banco de dados SQLite estabelecida com sucesso');
+    logger.info('Conexão com o banco de dados SQLite estabelecida com sucesso');
   }
 });
 
@@ -24,6 +35,8 @@ db.get('PRAGMA foreign_keys = ON');
 
 // Rota para listar todos os produtos
 app.get('/products', (req, res) => {
+  logger.info('GET all products stated');
+
   const sql = `SELECT
       p.id,
       p.name,
@@ -37,7 +50,7 @@ app.get('/products', (req, res) => {
 
   db.all(sql, (err, rows) => {
     if (err) {
-      // Add logging
+      logger.error('An error occurred:', err);
       return res.status(500).json({ error: 'Erro inesperado' });
     }
 
@@ -46,19 +59,22 @@ app.get('/products', (req, res) => {
       r.sizes = JSON.parse(r.sizes);
     });
 
+    logger.info('GET all products succeeded');
     return res.json(rows);
   });
 });
 
 app.get('/products/:id', (req, res) => {
+  logger.info('GET single product started');
+
   const { error, value } = validateProductId(req.params.id);
 
   if (error) {
+    logger.warn('Validation error has occurred:', error);
     return res.status(400).json({ errors: error.details });
   }
 
   const productId = value;
-
   const sql = `SELECT 
       p.id, 
       p.name, 
@@ -73,26 +89,31 @@ app.get('/products/:id', (req, res) => {
 
   db.get(sql, [productId], (err, row) => {
     if (err) {
-      // Add logging
+      logger.error('An error occurred:', err);
       return res.status(500).json({ error: 'Erro inesperado' });
     }
 
     if (!row) {
+      logger.warn('Product not found', { productId });
       return res.status(404).json({ error: 'Produto não encontrado' });
     }
 
     row.prices = JSON.parse(row.prices);
     row.sizes = JSON.parse(row.sizes);
 
+    logger.info('GET single product succeeded', { productId });
     return res.json(row);
   });
 });
 
 // Rota para adicionar um novo produto
 app.post('/products', (req, res) => {
+  logger.info('POST product started');
+
   const { error, value } = validateProduct(req.body);
 
   if (error) {
+    logger.warn('Validation error has occurred:', error);
     return res.status(400).json({ errors: error.details });
   }
 
@@ -106,7 +127,7 @@ app.post('/products', (req, res) => {
     db.run(sql, [name, img, description], function (err) {
       if (err) {
         db.run('ROLLBACK');
-        // Add logging
+        logger.error('An error occurred:', err);
         return res.status(500).json({ error: 'Erro inesperado' });
       }
 
@@ -125,11 +146,12 @@ app.post('/products', (req, res) => {
       statement.finalize(() => {
         if (errors.length > 0) {
           db.run('ROLLBACK');
-          // Add logging
+          logger.error('An error occurred:', err);
           return res.status(500).json({ error: 'Erro inesperado' });
         }
 
         db.run('COMMIT');
+        logger.info('POST product succeeded', { productId });
         return res.status(201).json({ id: productId, name, img, description, prices, sizes });
       });
     });
@@ -138,10 +160,20 @@ app.post('/products', (req, res) => {
 
 // Rota para atualizar um produto existente
 app.put('/products/:id', (req, res) => {
+  logger.info('PUT product started');
+
   const idValidationResult = validateProductId(req.params.id);
   const productValidationResult = validateProduct(req.body);
 
   if (idValidationResult.error || productValidationResult.error) {
+    if (idValidationResult.error) {
+      logger.warn('Validation error has occurred:', idValidationResult.error);
+    }
+
+    if (productValidationResult.error) {
+      logger.warn('Validation error has occurred:', productValidationResult.error);
+    }
+
     const idValidationErrors = idValidationResult.error?.details ?? [];
     const productValidationErrors = productValidationResult.error?.details ?? [];
     return res.status(400).json({ errors: [...idValidationErrors, ...productValidationErrors] });
@@ -160,12 +192,13 @@ app.put('/products/:id', (req, res) => {
     db.run(updateSql, [name, img, description, productId], function (err) {
       if (err) {
         db.run('ROLLBACK');
-        // Add logging
+        logger.error('An error occurred:', err);
         return res.status(500).json({ error: 'Erro inesperado' });
       }
 
       if (this.changes === 0) {
         db.run('ROLLBACK');
+        logger.warn('Product not found', { productId });
         return res.status(404).json({ error: 'Produto não encontrado' });
       }
 
@@ -174,7 +207,7 @@ app.put('/products/:id', (req, res) => {
       db.run(deleteSql, [productId], function (err) {
         if (err) {
           db.run('ROLLBACK');
-          // Add logging
+          logger.error('An error occurred:', err);
           return res.status(500).json({ error: 'Erro inesperado' });
         }
 
@@ -192,11 +225,12 @@ app.put('/products/:id', (req, res) => {
         statement.finalize(() => {
           if (errors.length > 0) {
             db.run('ROLLBACK');
-            // Add logging
+            logger.error('An error occurred:', err);
             return res.status(500).json({ error: 'Erro inesperado' });
           }
 
           db.run('COMMIT');
+          logger.info('PUT product succeeded', { productId });
           return res.status(204).send();
         });
       });
@@ -206,26 +240,30 @@ app.put('/products/:id', (req, res) => {
 
 // Rota para excluir um produto pelo ID
 app.delete('/products/:id', (req, res) => {
+  logger.info('DELETE product started');
+
   const { error, value } = validateProductId(req.params.id);
 
   if (error) {
+    logger.warn('Validation error has occurred:', error);
     return res.status(400).json({ errors: error.details });
   }
 
   const productId = value;
-
   const sql = 'DELETE FROM products WHERE id = ?';
 
   db.run(sql, [productId], function (err) {
     if (err) {
-      // Add logging
+      logger.error('An error occurred:', err);
       return res.status(500).json({ error: 'Erro inesperado' });
     }
 
     if (this.changes === 0) {
+      logger.warn('Product not found', { productId });
       return res.status(404).json({ error: 'Produto não encontrado' });
     }
 
+    logger.info('DELETE product succeeded', { productId });
     return res.status(204).send();
   });
 });
@@ -238,5 +276,5 @@ app.delete('/products/:id', (req, res) => {
 
 // Iniciar o servidor
 app.listen(PORT, () => {
-  console.log(`Servidor iniciado na porta ${PORT}`);
+  logger.info(`Servidor iniciado na porta ${PORT}`);
 });
