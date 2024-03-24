@@ -3,21 +3,24 @@
   "version": "1.0.0",
   "main": "script.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node routes",
-    "start:dev": "node --watch routes",
-    "seed": "node db-utils"
+    "test": "jest",
+    "start": "node ./src/server",
+    "start:dev": "node --watch ./src/server",
+    "seed": "node ./helpers/db-script"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^1.6.8",
     "express": "^4.18.3",
     "joi": "^17.12.2",
     "morgan": "^1.10.0",
     "sqlite3": "^5.1.7",
     "winston": "^3.12.0"
   },
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4"
+  }
 }

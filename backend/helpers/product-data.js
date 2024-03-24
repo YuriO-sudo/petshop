@@ -1,4 +1,4 @@
-let produtosJson = [
+const productData = [
   {
     id: 1,
     name: 'Areia de Gato Grãos Finos',
@@ -65,4 +65,4 @@ let produtosJson = [
   },
 ];
 
-module.exports = produtosJson;
+module.exports = productData;
