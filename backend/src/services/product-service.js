@@ -5,14 +5,14 @@ const unitOfWork = require('../persistence/unit-of-work');
 const findAllProducts = async () => {
   try {
     const products = await productRepository.selectAllProducts();
-    return { serviceValue: products };
-  } catch (serviceError) {
-    logger.error('Find all products, error occurred:', serviceError);
-    return { serviceError };
+    return { value: products };
+  } catch (error) {
+    logger.error('Find all products, error occurred:', error);
+    return { error };
   }
 };
 
-const findProduct = async (productId) => {
+const findProductById = async (productId) => {
   try {
     const product = await productRepository.selectProductById(productId);
 
@@ -20,10 +20,10 @@ const findProduct = async (productId) => {
       logger.warn('Find product by id, product not found', { productId });
     }
 
-    return { serviceValue: product };
-  } catch (serviceError) {
-    logger.error('Find product by id, error occurred:', serviceError);
-    return { serviceError };
+    return { value: product };
+  } catch (error) {
+    logger.error('Find product by id, error occurred:', error);
+    return { error };
   }
 };
 
@@ -36,11 +36,11 @@ const addProduct = async (product) => {
 
     await unitOfWork.commit();
 
-    return { serviceValue: { id: productId, ...product } };
-  } catch (serviceError) {
+    return { value: { id: productId, ...product } };
+  } catch (error) {
     await unitOfWork.rollback();
-    logger.error('Add product, error occurred:', serviceError);
-    return { serviceError };
+    logger.error('Add product, error occurred:', error);
+    return { error };
   }
 };
 
@@ -56,7 +56,7 @@ const updateProduct = async (productId, product) => {
     if (numberOfChanges === 0) {
       await unitOfWork.rollback();
       logger.warn('Update product, product not found', { productId });
-      return { serviceValue: false };
+      return { value: false };
     }
 
     await productRepository.deleteProductDetails(productId);
@@ -64,11 +64,11 @@ const updateProduct = async (productId, product) => {
 
     await unitOfWork.commit();
 
-    return { serviceValue: true };
-  } catch (serviceError) {
+    return { value: true };
+  } catch (error) {
     unitOfWork.rollback();
-    logger.error('Update product, error occurred:', serviceError);
-    return { serviceError };
+    logger.error('Update product, error occurred:', error);
+    return { error };
   }
 };
 
@@ -78,19 +78,19 @@ const deleteProduct = async (productId) => {
 
     if (numberOfChanges === 0) {
       logger.warn('Delete product, product not found', { productId });
-      return { serviceValue: false };
+      return { value: false };
     }
 
-    return { serviceValue: true };
-  } catch (serviceError) {
-    logger.error('Delete product, error occurred:', serviceError);
-    return { serviceError };
+    return { value: true };
+  } catch (error) {
+    logger.error('Delete product, error occurred:', error);
+    return { error };
   }
 };
 
 module.exports = {
   findAllProducts,
-  findProductById: findProduct,
+  findProductById,
   addProduct,
   updateProduct,
   deleteProduct,

@@ -1,18 +1,23 @@
 const express = require('express');
 
 const productController = require('../controllers/product-controller');
+const {
+  createProductIdChain,
+  createProductBodyChain,
+  createProductIdAndBodyChain,
+} = require('../validators/product-validator');
 
 const productRouter = express.Router();
 
 productRouter
   .route('/products')
   .get(productController.getAllProducts)
-  .post(productController.postProduct);
+  .post(createProductBodyChain, productController.postProduct);
 
 productRouter
   .route('/products/:id')
-  .get(productController.getProductById)
-  .put(productController.putProduct)
-  .delete(productController.deleteProduct);
+  .get(createProductIdChain, productController.getProductById)
+  .put(createProductIdAndBodyChain, productController.putProduct)
+  .delete(createProductIdChain, productController.deleteProduct);
 
 module.exports = productRouter;

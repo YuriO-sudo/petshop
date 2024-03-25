@@ -1,110 +1,91 @@
+const { validationResult } = require('express-validator');
+
 const logger = require('../utils/logger');
 const productService = require('../services/product-service');
-const {
-  validateProductId,
-  validateProduct,
-} = require('../validators/product-validator');
 
 const getAllProducts = async (req, res) => {
-  const { serviceError, serviceValue } = await productService.findAllProducts();
+  const { error, value } = await productService.findAllProducts();
 
-  if (serviceError) {
+  if (error) {
     return res.status(500).json({ error: 'Erro inesperado' });
   }
 
-  return res.json(serviceValue);
+  return res.json(value);
 };
 
 const getProductById = async (req, res) => {
-  const { error, value } = validateProductId(req.params.id);
+  const errors = validationResult(req);
 
-  if (error) {
-    logger.warn('GET product by id, validation error occurred:', error);
-    return res.status(400).json({ errors: error.details });
+  if (!errors.isEmpty()) {
+    logger.warn('GET product by id, validation error occurred', errors);
+    return res.status(400).json({ errors: errors.array() });
   }
 
-  const { serviceError, serviceValue } = await productService.findProductById(
-    value
-  );
+  const { error, value } = await productService.findProductById(req.params.id);
 
-  if (serviceError) {
+  if (error) {
     return res.status(500).json({ error: 'Erro inesperado' });
   }
 
-  return serviceValue
-    ? res.json(serviceValue)
+  return value
+    ? res.json(value)
     : res.status(404).json({ error: 'Produto não encontrado' });
 };
 
 const postProduct = async (req, res) => {
-  const { error, value } = validateProduct(req.body);
+  const errors = validationResult(req);
 
-  if (error) {
-    logger.warn('POST product, validation error occurred:', error);
-    return res.status(400).json({ errors: error.details });
+  if (!errors.isEmpty()) {
+    logger.warn('POST product, validation error occurred', errors);
+    return res.status(400).json({ errors: errors.array() });
   }
 
-  const { serviceError, serviceValue } = await productService.addProduct(value);
+  const { error, value } = await productService.addProduct(req.body);
 
-  if (serviceError) {
+  if (error) {
     return res.status(500).json({ error: 'Erro inesperado' });
   }
 
-  return res.status(201).json(serviceValue);
+  return res.status(201).json(value);
 };
 
 const putProduct = async (req, res) => {
-  const idResult = validateProductId(req.params.id);
-  const productResult = validateProduct(req.body);
+  const errors = validationResult(req);
 
-  if (idResult.error) {
-    logger.warn('PUT product, validation error occurred:', idResult.error);
+  if (!errors.isEmpty()) {
+    logger.warn('PUT product, validation error occurred', errors);
+    return res.status(400).json({ errors: errors.array() });
   }
 
-  if (productResult.error) {
-    logger.warn('PUT product, validation error occurred:', productResult.error);
-  }
-
-  if (idResult.error || productResult.error) {
-    return res.status(400).json({
-      errors: [
-        ...(idResult.error?.details ?? []),
-        ...(productResult.error?.details ?? []),
-      ],
-    });
-  }
-
-  const { serviceError, serviceValue } = await productService.updateProduct(
-    idResult.value,
-    productResult.value
+  const { error, value } = await productService.updateProduct(
+    req.params.id,
+    req.body
   );
 
-  if (serviceError) {
+  if (error) {
     return res.status(500).json({ error: 'Erro inesperado' });
   }
 
-  return serviceValue
+  return value
     ? res.status(204).send()
     : res.status(404).json({ error: 'Produto não encontrado' });
 };
 
 const deleteProduct = async (req, res) => {
-  const { error, value } = validateProductId(req.params.id);
+  const errors = validationResult(req);
 
-  if (error) {
-    logger.warn('DELETE product, validation error occurred:', error);
-    return res.status(400).json({ errors: error.details });
+  if (!errors.isEmpty()) {
+    logger.warn('DELETE product, validation error occurred', errors);
+    return res.status(400).json({ errors: errors.array() });
   }
 
-  const { serviceError, serviceValue } = await productService.deleteProduct(
-    value
-  );
+  const { error, value } = await productService.deleteProduct(req.params.id);
 
-  if (serviceError) {
+  if (error) {
     return res.status(500).json({ error: 'Erro inesperado' });
   }
 
-  return serviceValue
+  return value
     ? res.status(204).send()
     : res.status(404).json({ error: 'Produto não encontrado' });
 };

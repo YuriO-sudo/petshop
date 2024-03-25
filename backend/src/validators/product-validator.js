@@ -1,20 +1,32 @@
-const Joi = require('joi');
+const { body, param } = require('express-validator');
 
-const productIdSchema = Joi.number().positive().integer().label('id');
+const createProductIdChain = [param('id').isInt({ gt: 0 })];
 
-const productSchema = Joi.object({
-  name: Joi.string().trim().max(150).required(),
-  img: Joi.string().trim().uri({ relativeOnly: true }).required(),
-  description: Joi.string().trim().max(500).required(),
-  prices: Joi.array()
-    .items(Joi.number().positive().precision(2))
-    .length(3)
-    .required(),
-  sizes: Joi.array().items(Joi.string().trim().max(50)).length(3).required(),
-});
+const createProductBodyChain = [
+  body('name').isString().trim().notEmpty().isLength({ max: 150 }),
+  body('img')
+    .isString()
+    .trim()
+    .notEmpty()
+    .isURL({ require_tld: false })
+    .isLength({ max: 255 }),
+  body('description').isString().trim().notEmpty().isLength({ max: 500 }),
+  body('prices').isArray({ min: 3, max: 3 }),
+  body('prices.*')
+    .isFloat({ gt: 0 })
+    .isDecimal({ decimal_digits: '1,2' })
+    .toFloat(),
+  body('sizes').isArray({ min: 3, max: 3 }),
+  body('sizes.*').isString().trim().notEmpty().isLength({ max: 50 }),
+];
 
-const validateProductId = (productId) => productIdSchema.validate(productId);
-const validateProduct = (product) =>
-  productSchema.validate(product, { abortEarly: false });
+const createProductIdAndBodyChain = [
+  ...createProductIdChain,
+  ...createProductBodyChain,
+];
 
-module.exports = { validateProductId, validateProduct };
+module.exports = {
+  createProductIdChain,
+  createProductBodyChain,
+  createProductIdAndBodyChain,
+};

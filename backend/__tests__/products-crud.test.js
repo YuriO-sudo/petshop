@@ -13,14 +13,14 @@ describe('Products CRUD tests', () => {
     await seedDatabase();
   });
 
-  it('GET all products should return all products', async () => {
+  test('GET all products should return all products', async () => {
     const response = await agent.get('/products');
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveLength(productData.length);
   });
 
-  it('GET single product with valid id should return product', async () => {
+  test('GET single product with valid id should return product', async () => {
     const productId = 1;
     const expectedProduct = productData[0];
 
@@ -30,9 +30,8 @@ describe('Products CRUD tests', () => {
     expect(response.body).toEqual(expectedProduct);
   });
 
-  it('GET single product with invalid id should return validation error', async () => {
+  test('GET single product with invalid id should return validation error', async () => {
     const invalidId = 'a';
-    const expectedString = 'id';
 
     const response = await agent.get(`/products/${invalidId}`);
 
@@ -40,7 +39,7 @@ describe('Products CRUD tests', () => {
     expect(response.body.errors).toHaveLength(1);
   });
 
-  it('GET single product with non-existent id should return not found', async () => {
+  test('GET single product with non-existent id should return not found', async () => {
     const nonExistentId = 999;
 
     const response = await agent.get(`/products/${nonExistentId}`);
@@ -49,7 +48,7 @@ describe('Products CRUD tests', () => {
     expect(response.body.error).toBe('Produto não encontrado');
   });
 
-  it('POST with valid product should be added and returned', async () => {
+  test('POST with valid product should be added and returned', async () => {
     const productToPost = {
       name: 'test product',
       img: 'images/test-product.png',
@@ -69,7 +68,7 @@ describe('Products CRUD tests', () => {
     expect(response.body.sizes).toEqual(productToPost.sizes);
   });
 
-  it('POST with invalid product should return validation error', async () => {
+  test('POST with invalid product should return validation error', async () => {
     const productToPost = {};
 
     const response = await agent.post('/products').send(productToPost);
@@ -78,7 +77,7 @@ describe('Products CRUD tests', () => {
     expect(response.body.errors.length).toBeGreaterThan(1);
   });
 
-  it('PUT with valid product should be updated', async () => {
+  test('PUT with valid product should be updated', async () => {
     const productId = 1;
     const productForUpdate = {
       name: 'test product',
@@ -95,7 +94,7 @@ describe('Products CRUD tests', () => {
     expect(response.status).toBe(204);
   });
 
-  it('PUT with invalid id should return validation error', async () => {
+  test('PUT with invalid id should return validation error', async () => {
     const invalidId = 'a';
     const productForUpdate = {
       name: 'test product',
@@ -113,7 +112,7 @@ describe('Products CRUD tests', () => {
     expect(response.body.errors).toHaveLength(1);
   });
 
-  it('PUT with invalid product should return validation error', async () => {
+  test('PUT with invalid product should return validation error', async () => {
     const invalidId = 1;
     const invalidProductForUpdate = {};
 
@@ -125,7 +124,7 @@ describe('Products CRUD tests', () => {
     expect(response.body.errors.length).toBeGreaterThan(1);
   });
 
-  it('PUT with non-existent id should return not found', async () => {
+  test('PUT with non-existent id should return not found', async () => {
     const nonExistentId = 999;
     const productForUpdate = {
       name: 'test product',
@@ -143,7 +142,7 @@ describe('Products CRUD tests', () => {
     expect(response.body.error).toBe('Produto não encontrado');
   });
 
-  it('DELETE product with valid id should be deleted', async () => {
+  test('DELETE product with valid id should be deleted', async () => {
     const productId = 1;
 
     const response = await agent.delete(`/products/${productId}`);
@@ -151,7 +150,7 @@ describe('Products CRUD tests', () => {
     expect(response.status).toBe(204);
   });
 
-  it('DELETE product with invalid id should return validation error', async () => {
+  test('DELETE product with invalid id should return validation error', async () => {
     const invalidId = 'a';
 
     const response = await agent.delete(`/products/${invalidId}`);
@@ -160,7 +159,7 @@ describe('Products CRUD tests', () => {
     expect(response.body.errors).toHaveLength(1);
   });
 
-  it('DELETE product with non-existent id should return not found', async () => {
+  test('DELETE product with non-existent id should return not found', async () => {
     const nonExistentId = 999;
 
     const response = await agent.delete(`/products/${nonExistentId}`);
