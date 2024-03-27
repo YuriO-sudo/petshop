@@ -1,39 +1,41 @@
-const db = require('./db');
+function unitOfWork(db) {
+  const beginTransaction = () => {
+    return new Promise((resolve, reject) => {
+      db.run('BEGIN TRANSACTION', (err) => {
+        if (err) {
+          reject(err);
+        }
 
-const beginTransaction = () => {
-  return new Promise((resolve, reject) => {
-    db.run('BEGIN TRANSACTION', (err) => {
-      if (err) {
-        reject(err);
-      }
-
-      resolve();
+        resolve();
+      });
     });
-  });
-};
+  };
 
-const rollback = () => {
-  return new Promise((resolve, reject) => {
-    db.run('ROLLBACK', (err) => {
-      if (err) {
-        reject(err);
-      }
+  const rollback = () => {
+    return new Promise((resolve, reject) => {
+      db.run('ROLLBACK', (err) => {
+        if (err) {
+          reject(err);
+        }
 
-      resolve();
+        resolve();
+      });
     });
-  });
-};
+  };
 
-const commit = () => {
-  return new Promise((resolve, reject) => {
-    db.run('COMMIT', (err) => {
-      if (err) {
-        reject(err);
-      }
+  const commit = () => {
+    return new Promise((resolve, reject) => {
+      db.run('COMMIT', (err) => {
+        if (err) {
+          reject(err);
+        }
 
-      resolve();
+        resolve();
+      });
     });
-  });
-};
+  };
 
-module.exports = { beginTransaction, rollback, commit };
+  return { beginTransaction, rollback, commit };
+}
+
+module.exports = unitOfWork;

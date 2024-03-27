@@ -1,11 +1,7 @@
 const express = require('express');
 
-const productController = require('../controllers/product-controller');
-const {
-  createProductIdChain,
-  createProductBodyChain,
-  createProductIdAndBodyChain,
-} = require('../validators/product-validator');
+const validators = require('../validators/product-validator');
+const productController = require('../dependency-injection/product-dependencies');
 
 const productRouter = express.Router();
 
@@ -65,7 +61,7 @@ const productRouter = express.Router();
 productRouter
   .route('/products')
   .get(productController.getAllProducts)
-  .post(createProductBodyChain, productController.postProduct);
+  .post(validators.productBodyChain, productController.postProduct);
 
 /**
  * @openapi
@@ -183,9 +179,9 @@ productRouter
  */
 productRouter
   .route('/products/:id')
-  .get(createProductIdChain, productController.getProductById)
-  .put(createProductIdAndBodyChain, productController.putProduct)
-  .delete(createProductIdChain, productController.deleteProduct);
+  .get(validators.productIdChain, productController.getProductById)
+  .put(validators.productIdAndBodyChain, productController.putProduct)
+  .delete(validators.productIdChain, productController.deleteProduct);
 
 module.exports = productRouter;
 

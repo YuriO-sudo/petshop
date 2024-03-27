@@ -1,8 +1,8 @@
 const { body, param } = require('express-validator');
 
-const createProductIdChain = [param('id').isInt({ gt: 0 })];
+const productIdChain = [param('id').isInt({ gt: 0 })];
 
-const createProductBodyChain = [
+const productBodyChain = [
   body('name').isString().trim().notEmpty().isLength({ max: 150 }),
   body('img')
     .isString()
@@ -20,13 +20,10 @@ const createProductBodyChain = [
   body('sizes.*').isString().trim().notEmpty().isLength({ max: 50 }),
 ];
 
-const createProductIdAndBodyChain = [
-  ...createProductIdChain,
-  ...createProductBodyChain,
-];
+const productIdAndBodyChain = [...productIdChain, ...productBodyChain];
 
 module.exports = {
-  createProductIdChain,
-  createProductBodyChain,
-  createProductIdAndBodyChain,
+  productIdChain,
+  productBodyChain,
+  productIdAndBodyChain,
 };

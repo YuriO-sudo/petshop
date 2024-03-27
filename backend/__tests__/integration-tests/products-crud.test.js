@@ -1,10 +1,10 @@
 const request = require('supertest');
-const productData = require('../helpers/product-data');
+const productData = require('../../helpers/product-data');
 
 process.env.DB = ':memory:';
 
-const app = require('../src/app');
-const seedDatabase = require('../helpers/db-seeder');
+const app = require('../../src/app');
+const seedDatabase = require('../../helpers/db-seeder');
 
 const agent = request(app);
 
