@@ -1,0 +1,9 @@
+__tests__
+.db
+coverage
+helpers
+node_modules
+.dockerignore
+compose.yml
+Dockerfile
+jest.config.js

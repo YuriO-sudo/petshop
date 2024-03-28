@@ -1,0 +1,28 @@
+{
+  "name": "petshop",
+  "version": "1.0.0",
+  "main": "script.js",
+  "scripts": {
+    "test": "jest",
+    "start": "node ./src/server",
+    "start:dev": "node --watch ./src/server",
+    "seed": "node ./helpers/db-script"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.3",
+    "express-validator": "^7.0.1",
+    "morgan": "^1.10.0",
+    "sqlite3": "^5.1.7",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0",
+    "winston": "^3.12.0"
+  },
+  "description": "",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4"
+  }
+}
