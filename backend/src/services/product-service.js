@@ -1,4 +1,4 @@
-function productService(logger, unitOfWork, productRepository) {
+function createProductService(logger, unitOfWork, productRepository) {
   const findAllProducts = async () => {
     try {
       const products = await productRepository.selectAllProducts();
@@ -94,4 +94,4 @@ function productService(logger, unitOfWork, productRepository) {
   };
 }
 
-module.exports = productService;
+module.exports = createProductService;

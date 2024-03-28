@@ -1,4 +1,4 @@
-function productRepository(db) {
+function createProductRepository(db) {
   const selectAllProducts = () => {
     const sql = `SELECT
     p.id,
@@ -162,4 +162,4 @@ const parseProductDetails = (row) => {
   row.sizes = JSON.parse(row.sizes);
 };
 
-module.exports = productRepository;
+module.exports = createProductRepository;

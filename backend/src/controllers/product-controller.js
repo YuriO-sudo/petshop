@@ -1,4 +1,4 @@
-function productController(logger, validator, productService) {
+function createProductController(logger, validator, productService) {
   const getAllProducts = async (req, res) => {
     const { error, value } = await productService.findAllProducts();
 
@@ -97,4 +97,4 @@ function productController(logger, validator, productService) {
   };
 }
 
-module.exports = productController;
+module.exports = createProductController;

@@ -1,4 +1,4 @@
-function unitOfWork(db) {
+function createUnitOfWork(db) {
   const beginTransaction = () => {
     return new Promise((resolve, reject) => {
       db.run('BEGIN TRANSACTION', (err) => {
@@ -38,4 +38,4 @@ function unitOfWork(db) {
   return { beginTransaction, rollback, commit };
 }
 
-module.exports = unitOfWork;
+module.exports = createUnitOfWork;

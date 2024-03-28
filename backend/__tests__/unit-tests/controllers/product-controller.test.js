@@ -1,4 +1,4 @@
-const productController = require('../../../src/controllers/product-controller');
+const createProductController = require('../../../src/controllers/product-controller');
 
 const loggerMock = {
   warn: jest.fn(),
@@ -16,7 +16,7 @@ const productServiceMock = {
   deleteProduct: jest.fn(),
 };
 
-const controller = productController(
+const productController = createProductController(
   loggerMock,
   validatorMock,
   productServiceMock
@@ -38,7 +38,7 @@ describe('Product Controller Tests', () => {
     const result = { value: [{ name: 'some product' }] };
     productServiceMock.findAllProducts.mockResolvedValue(result);
 
-    await controller.getAllProducts(req, res);
+    await productController.getAllProducts(req, res);
 
     expect(res.json).toHaveBeenCalledWith(result.value);
   });
@@ -48,7 +48,7 @@ describe('Product Controller Tests', () => {
     const expectedBody = { error: 'Erro inesperado' };
     productServiceMock.findAllProducts.mockResolvedValue(result);
 
-    await controller.getAllProducts(req, res);
+    await productController.getAllProducts(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith(expectedBody);
@@ -62,7 +62,7 @@ describe('Product Controller Tests', () => {
     });
     productServiceMock.findProductById.mockResolvedValue(result);
 
-    await controller.getProductById(req, res);
+    await productController.getProductById(req, res);
 
     expect(res.json).toHaveBeenCalledWith(result.value);
   });
@@ -76,7 +76,7 @@ describe('Product Controller Tests', () => {
     });
     productServiceMock.findProductById.mockResolvedValue(result);
 
-    await controller.getProductById(req, res);
+    await productController.getProductById(req, res);
 
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith(expectedBody);
@@ -90,7 +90,7 @@ describe('Product Controller Tests', () => {
       array: jest.fn().mockReturnValue(errorMock),
     });
 
-    await controller.getProductById(req, res);
+    await productController.getProductById(req, res);
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(expectedBody);
@@ -105,7 +105,7 @@ describe('Product Controller Tests', () => {
     });
     productServiceMock.findProductById.mockResolvedValue(result);
 
-    await controller.getProductById(req, res);
+    await productController.getProductById(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith(expectedBody);
@@ -119,7 +119,7 @@ describe('Product Controller Tests', () => {
     });
     productServiceMock.addProduct.mockResolvedValue(result);
 
-    await controller.postProduct(req, res);
+    await productController.postProduct(req, res);
 
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith(result.value);
@@ -133,7 +133,7 @@ describe('Product Controller Tests', () => {
       array: jest.fn().mockReturnValue(errorMock),
     });
 
-    await controller.postProduct(req, res);
+    await productController.postProduct(req, res);
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(expectedBody);
@@ -148,7 +148,7 @@ describe('Product Controller Tests', () => {
     });
     productServiceMock.addProduct.mockResolvedValue(result);
 
-    await controller.postProduct(req, res);
+    await productController.postProduct(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith(expectedBody);
@@ -163,7 +163,7 @@ describe('Product Controller Tests', () => {
     });
     productServiceMock.updateProduct.mockResolvedValue(result);
 
-    await controller.putProduct(req, res);
+    await productController.putProduct(req, res);
 
     expect(res.status).toHaveBeenCalledWith(204);
     expect(res.send).toHaveBeenCalled();
@@ -179,7 +179,7 @@ describe('Product Controller Tests', () => {
     });
     productServiceMock.updateProduct.mockResolvedValue(result);
 
-    await controller.putProduct(req, res);
+    await productController.putProduct(req, res);
 
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith(expectedBody);
@@ -193,7 +193,7 @@ describe('Product Controller Tests', () => {
       array: jest.fn().mockReturnValue(errorMock),
     });
 
-    await controller.putProduct(req, res);
+    await productController.putProduct(req, res);
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(expectedBody);
@@ -209,7 +209,7 @@ describe('Product Controller Tests', () => {
     });
     productServiceMock.updateProduct.mockResolvedValue(result);
 
-    await controller.putProduct(req, res);
+    await productController.putProduct(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith(expectedBody);
@@ -223,7 +223,7 @@ describe('Product Controller Tests', () => {
     });
     productServiceMock.deleteProduct.mockResolvedValue(result);
 
-    await controller.deleteProduct(req, res);
+    await productController.deleteProduct(req, res);
 
     expect(res.status).toHaveBeenCalledWith(204);
     expect(res.send).toHaveBeenCalled();
@@ -238,7 +238,7 @@ describe('Product Controller Tests', () => {
     });
     productServiceMock.deleteProduct.mockResolvedValue(result);
 
-    await controller.deleteProduct(req, res);
+    await productController.deleteProduct(req, res);
 
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith(expectedBody);
@@ -252,7 +252,7 @@ describe('Product Controller Tests', () => {
       array: jest.fn().mockReturnValue(errorMock),
     });
 
-    await controller.deleteProduct(req, res);
+    await productController.deleteProduct(req, res);
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(expectedBody);
@@ -267,7 +267,7 @@ describe('Product Controller Tests', () => {
     });
     productServiceMock.deleteProduct.mockResolvedValue(result);
 
-    await controller.deleteProduct(req, res);
+    await productController.deleteProduct(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith(expectedBody);

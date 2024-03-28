@@ -1,4 +1,4 @@
-const productRepository = require('../../../src/persistence/product-repository');
+const createProductRepository = require('../../../src/persistence/product-repository');
 
 const dbMock = {
   all: jest.fn(),
@@ -7,24 +7,28 @@ const dbMock = {
   prepare: jest.fn(),
 };
 
-const repository = productRepository(dbMock);
+const productRepository = createProductRepository(dbMock);
 
 describe('Product Repository Tests', function () {
-  this.changes = 0;
+  this.changes = 1;
   this.lastID = 1;
 
   test('selectAllProducts should resolve with products when successful', async () => {
     const products = [{ name: 'some product', prices: '[]', sizes: '[]' }];
     dbMock.all.mockImplementation((sql, callback) => callback(null, products));
 
-    await expect(repository.selectAllProducts()).resolves.toEqual(products);
+    await expect(productRepository.selectAllProducts()).resolves.toEqual(
+      products
+    );
   });
 
   test('selectAllProducts should reject with error when error occurs', async () => {
     const errorMock = new Error();
     dbMock.all.mockImplementation((sql, callback) => callback(errorMock));
 
-    await expect(repository.selectAllProducts()).rejects.toEqual(errorMock);
+    await expect(productRepository.selectAllProducts()).rejects.toEqual(
+      errorMock
+    );
   });
 
   test('selectProductById should resolve with product when successful', async () => {
@@ -33,14 +37,18 @@ describe('Product Repository Tests', function () {
       callback(null, product)
     );
 
-    await expect(repository.selectProductById()).resolves.toEqual(product);
+    await expect(productRepository.selectProductById()).resolves.toEqual(
+      product
+    );
   });
 
   test('selectProductById should reject with error when error occurs', async () => {
     const errorMock = new Error();
     dbMock.get.mockImplementation((sql, [], callback) => callback(errorMock));
 
-    await expect(repository.selectProductById()).rejects.toEqual(errorMock);
+    await expect(productRepository.selectProductById()).rejects.toEqual(
+      errorMock
+    );
   });
 
   test('insertProduct should resolve with id when successful', async () => {
@@ -51,7 +59,7 @@ describe('Product Repository Tests', function () {
     };
     dbMock.run.mockImplementation((sql, [], callback) => callback(null));
 
-    await expect(repository.insertProduct(product)).resolves.toEqual(
+    await expect(productRepository.insertProduct(product)).resolves.toEqual(
       this.lastID
     );
   });
@@ -65,7 +73,9 @@ describe('Product Repository Tests', function () {
     const errorMock = new Error();
     dbMock.run.mockImplementation((sql, [], callback) => callback(errorMock));
 
-    await expect(repository.insertProduct(product)).rejects.toEqual(errorMock);
+    await expect(productRepository.insertProduct(product)).rejects.toEqual(
+      errorMock
+    );
   });
 
   test('updateProduct should resolve with changes when successful', async () => {
@@ -77,9 +87,9 @@ describe('Product Repository Tests', function () {
     };
     dbMock.run.mockImplementation((sql, [], callback) => callback(null));
 
-    await expect(repository.updateProduct(productId, product)).resolves.toEqual(
-      this.changes
-    );
+    await expect(
+      productRepository.updateProduct(productId, product)
+    ).resolves.toEqual(this.changes);
   });
 
   test('updateProduct should reject with error when error occurs', async () => {
@@ -92,16 +102,16 @@ describe('Product Repository Tests', function () {
     const errorMock = new Error();
     dbMock.run.mockImplementation((sql, [], callback) => callback(errorMock));
 
-    await expect(repository.updateProduct(productId, product)).rejects.toEqual(
-      errorMock
-    );
+    await expect(
+      productRepository.updateProduct(productId, product)
+    ).rejects.toEqual(errorMock);
   });
 
   test('deleteProduct should resolve with changes when successful', async () => {
     const productId = 1;
     dbMock.run.mockImplementation((sql, [], callback) => callback(null));
 
-    await expect(repository.deleteProduct(productId)).resolves.toEqual(
+    await expect(productRepository.deleteProduct(productId)).resolves.toEqual(
       this.changes
     );
   });
@@ -111,7 +121,7 @@ describe('Product Repository Tests', function () {
     const errorMock = new Error();
     dbMock.run.mockImplementation((sql, [], callback) => callback(errorMock));
 
-    await expect(repository.deleteProduct(productId)).rejects.toEqual(
+    await expect(productRepository.deleteProduct(productId)).rejects.toEqual(
       errorMock
     );
   });
@@ -125,7 +135,7 @@ describe('Product Repository Tests', function () {
     });
 
     await expect(
-      repository.insertProductDetails(productId, product)
+      productRepository.insertProductDetails(productId, product)
     ).resolves.not.toBeDefined();
   });
 
@@ -140,7 +150,7 @@ describe('Product Repository Tests', function () {
     });
 
     await expect(
-      repository.insertProductDetails(productId, product)
+      productRepository.insertProductDetails(productId, product)
     ).rejects.toEqual(expectedResult);
   });
 
@@ -149,7 +159,7 @@ describe('Product Repository Tests', function () {
     dbMock.run.mockImplementation((sql, [], callback) => callback(null));
 
     await expect(
-      repository.deleteProductDetails(productId)
+      productRepository.deleteProductDetails(productId)
     ).resolves.not.toBeDefined();
   });
 
@@ -158,8 +168,8 @@ describe('Product Repository Tests', function () {
     const errorMock = new Error();
     dbMock.run.mockImplementation((sql, [], callback) => callback(errorMock));
 
-    await expect(repository.deleteProductDetails(productId)).rejects.toEqual(
-      errorMock
-    );
+    await expect(
+      productRepository.deleteProductDetails(productId)
+    ).rejects.toEqual(errorMock);
   });
 });

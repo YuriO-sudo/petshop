@@ -1,7 +1,7 @@
 const express = require('express');
 
 const validators = require('../validators/product-validator');
-const productController = require('../dependency-injection/product-dependencies');
+const productController = require('../ioc/product-dependencies');
 
 const productRouter = express.Router();
 

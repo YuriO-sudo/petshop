@@ -1,4 +1,4 @@
-const productService = require('../../../src/services/product-service');
+const createProductService = require('../../../src/services/product-service');
 
 const loggerMock = {
   error: jest.fn(),
@@ -21,7 +21,7 @@ const productRepositoryMock = {
   deleteProductDetails: jest.fn(),
 };
 
-const service = productService(
+const productService = createProductService(
   loggerMock,
   unitOfWorkMock,
   productRepositoryMock
@@ -32,7 +32,7 @@ describe('Product Service Tests', () => {
     const products = [{ name: 'some product' }];
     productRepositoryMock.selectAllProducts.mockResolvedValue(products);
 
-    const { error, value } = await service.findAllProducts();
+    const { error, value } = await productService.findAllProducts();
 
     expect(error).not.toBeDefined();
     expect(value).toEqual(products);
@@ -42,7 +42,7 @@ describe('Product Service Tests', () => {
     const errorMock = new Error();
     productRepositoryMock.selectAllProducts.mockRejectedValue(errorMock);
 
-    const { error } = await service.findAllProducts();
+    const { error } = await productService.findAllProducts();
 
     expect(error).toBe(errorMock);
   });
@@ -52,7 +52,7 @@ describe('Product Service Tests', () => {
     const product = { name: 'some product' };
     productRepositoryMock.selectProductById.mockResolvedValue(product);
 
-    const { error, value } = await service.findProductById(productId);
+    const { error, value } = await productService.findProductById(productId);
 
     expect(productRepositoryMock.selectProductById).toHaveBeenCalledWith(
       productId
@@ -65,7 +65,7 @@ describe('Product Service Tests', () => {
     const productId = 1;
     productRepositoryMock.selectProductById.mockResolvedValue();
 
-    const { error, value } = await service.findProductById(productId);
+    const { error, value } = await productService.findProductById(productId);
 
     expect(productRepositoryMock.selectProductById).toHaveBeenCalledWith(
       productId
@@ -79,7 +79,7 @@ describe('Product Service Tests', () => {
     const errorMock = new Error();
     productRepositoryMock.selectProductById.mockRejectedValue(errorMock);
 
-    const { error } = await service.findProductById(productId);
+    const { error } = await productService.findProductById(productId);
 
     expect(error).toBe(errorMock);
   });
@@ -90,7 +90,7 @@ describe('Product Service Tests', () => {
     const expectedValue = { id: productId, ...product };
     productRepositoryMock.insertProduct.mockResolvedValue(productId);
 
-    const { error, value } = await service.addProduct(product);
+    const { error, value } = await productService.addProduct(product);
 
     expect(unitOfWorkMock.beginTransaction).toHaveBeenCalled();
     expect(productRepositoryMock.insertProduct).toHaveBeenCalledWith(product);
@@ -108,7 +108,7 @@ describe('Product Service Tests', () => {
     const errorMock = new Error();
     productRepositoryMock.insertProduct.mockRejectedValue(errorMock);
 
-    const { error } = await service.addProduct(product);
+    const { error } = await productService.addProduct(product);
 
     expect(unitOfWorkMock.rollback).toHaveBeenCalled();
     expect(error).toBe(errorMock);
@@ -121,7 +121,10 @@ describe('Product Service Tests', () => {
     const expectedValue = true;
     productRepositoryMock.updateProduct.mockResolvedValue(numberOfChanges);
 
-    const { error, value } = await service.updateProduct(productId, product);
+    const { error, value } = await productService.updateProduct(
+      productId,
+      product
+    );
 
     expect(unitOfWorkMock.beginTransaction).toHaveBeenCalled();
     expect(productRepositoryMock.updateProduct).toHaveBeenCalledWith(
@@ -147,7 +150,10 @@ describe('Product Service Tests', () => {
     const expectedValue = false;
     productRepositoryMock.updateProduct.mockResolvedValue(numberOfChanges);
 
-    const { error, value } = await service.updateProduct(productId, product);
+    const { error, value } = await productService.updateProduct(
+      productId,
+      product
+    );
 
     expect(productRepositoryMock.updateProduct).toHaveBeenCalledWith(
       productId,
@@ -164,7 +170,7 @@ describe('Product Service Tests', () => {
     const errorMock = new Error();
     productRepositoryMock.updateProduct.mockRejectedValue(errorMock);
 
-    const { error } = await service.updateProduct(productId, product);
+    const { error } = await productService.updateProduct(productId, product);
 
     expect(unitOfWorkMock.rollback).toHaveBeenCalled();
     expect(error).toBe(errorMock);
@@ -176,7 +182,7 @@ describe('Product Service Tests', () => {
     const expectedValue = true;
     productRepositoryMock.deleteProduct.mockResolvedValue(numberOfChanges);
 
-    const { error, value } = await service.deleteProduct(productId);
+    const { error, value } = await productService.deleteProduct(productId);
 
     expect(productRepositoryMock.deleteProduct).toHaveBeenCalledWith(productId);
     expect(error).not.toBeDefined();
@@ -189,7 +195,7 @@ describe('Product Service Tests', () => {
     const expectedValue = false;
     productRepositoryMock.deleteProduct.mockResolvedValue(numberOfChanges);
 
-    const { error, value } = await service.deleteProduct(productId);
+    const { error, value } = await productService.deleteProduct(productId);
 
     expect(productRepositoryMock.deleteProduct).toHaveBeenCalledWith(productId);
     expect(error).not.toBeDefined();
@@ -201,7 +207,7 @@ describe('Product Service Tests', () => {
     const errorMock = new Error();
     productRepositoryMock.deleteProduct.mockRejectedValue(errorMock);
 
-    const { error } = await service.deleteProduct(productId);
+    const { error } = await productService.deleteProduct(productId);
 
     expect(error).toBe(errorMock);
   });
